@@ -3,7 +3,7 @@ name = "ecdb"
 version = "0.0.1"
 authors = ["Thomas Nicollet <thomas.nicollet@epitech.eu>"]
 edition = "2018"
-license-file = "LICENSE"
+license = "Apache-2.0"
 readme = "README.md"
 description = "Entity component database."
 
