@@ -3,6 +3,9 @@ name = "ecdb"
 version = "0.0.1"
 authors = ["Thomas Nicollet <thomas.nicollet@epitech.eu>"]
 edition = "2018"
+license-file = "LICENSE"
+readme = "README.md"
+description = "Entity component database."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
