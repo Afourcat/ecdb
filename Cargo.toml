@@ -6,6 +6,11 @@ edition = "2018"
 license = "Apache-2.0"
 readme = "README.md"
 description = "Entity component database."
+repository = "https://github.com/nwmqpa/ecdb"
+include = [
+    "**/*.proto",
+    "**/*.rs"
+]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
