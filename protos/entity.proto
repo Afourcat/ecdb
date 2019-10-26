@@ -13,3 +13,17 @@
 // limitations under the License.
 
 syntax = "proto3";
+
+message ComponentValue {
+    string name = 1;
+    bytes value = 2;
+}
+
+message Component {
+    string name = 1;
+    repeated ComponentValue values = 2;
+}
+
+message CreateEntity {
+    repeated Component components = 1;
+}

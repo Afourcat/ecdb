@@ -13,3 +13,4 @@
 // limitations under the License.
 
 pub mod component_schema;
+pub mod entity;
