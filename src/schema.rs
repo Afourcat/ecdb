@@ -14,9 +14,10 @@
 
 use super::protos;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
-use std::collections::HashMap;
+use std::hash::BuildHasher;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum AttributeType {
@@ -31,7 +32,6 @@ pub struct Schema {
 }
 
 impl From<protos::component_schema::AttributeType> for AttributeType {
-
     fn from(attribute_type: protos::component_schema::AttributeType) -> Self {
         match attribute_type {
             protos::component_schema::AttributeType::Integer => Self::Integer,
@@ -39,7 +39,6 @@ impl From<protos::component_schema::AttributeType> for AttributeType {
             protos::component_schema::AttributeType::Float => Self::Float,
         }
     }
-
 }
 
 impl From<protos::component_schema::ComponentSchema> for HashMap<String, AttributeType> {

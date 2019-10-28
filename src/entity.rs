@@ -31,9 +31,9 @@ impl ComponentAttributeValue {
         data: Vec<u8>,
     ) -> Result<Self, &'static str> {
         Ok(match attribute_type {
-            AttributeType::String => Self::String(
-                String::from_utf8(data).map_err(|_| "Cannot convert to UTF8")?,
-            ),
+            AttributeType::String => {
+                Self::String(String::from_utf8(data).map_err(|_| "Cannot convert to UTF8")?)
+            }
             AttributeType::Integer => Self::Integer(BigEndian::read_i128(&data)),
             AttributeType::Float => Self::Float(BigEndian::read_f64(&data)),
         })
@@ -58,13 +58,14 @@ impl ComponentAttribute {
         component_value: protos::entity::ComponentValue,
     ) -> Result<Self, &'static str> {
         match component_schema.get(&component_value.name) {
-            Some(attribute_type) => Ok(
-                Self {
-                    name: component_value.name,
-                    value: ComponentAttributeValue::parse_attribute_type(attribute_type, component_value.value)?
-                }
-            ),
-            None => Err("Cannot get the attribute type for this component attribute")
+            Some(attribute_type) => Ok(Self {
+                name: component_value.name,
+                value: ComponentAttributeValue::parse_attribute_type(
+                    attribute_type,
+                    component_value.value,
+                )?,
+            }),
+            None => Err("Cannot get the attribute type for this component attribute"),
         }
     }
 }
@@ -80,19 +81,19 @@ impl Component {
         schema: &Schema,
         component: protos::entity::Component,
     ) -> Result<Self, &'static str> {
-        match schema.components.get(&component.name) {
-            Some(component_schema) => Ok(Self {
-                name: component.name,
-                attributes: component
-                    .values
-                    .into_iter()
-                    .map(|value| {
-                        ComponentAttribute::parse_component_attribute(component_schema, value)
-                    })
-                    .collect::<Result<Vec<ComponentAttribute>, &'static str>>()?,
-            }),
-            None => Err("Cannot get the schema for this component"),
-        }
+        let component_schema = schema
+            .components
+            .get(&component.name)
+            .ok_or("Cannot get the schema for this component.")?;
+
+        Ok(Self {
+            name: component.name,
+            attributes: component
+                .values
+                .into_iter()
+                .map(|value| ComponentAttribute::parse_component_attribute(component_schema, value))
+                .collect::<Result<Vec<ComponentAttribute>, &'static str>>()?,
+        })
     }
 }
 
