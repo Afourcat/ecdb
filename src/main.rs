@@ -11,23 +11,29 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#[cfg_attr(feature = "with-serde", macro_use)]
+#[cfg(feature = "with-serde")]
+extern crate serde;
 
 mod protos;
 
 use byteorder::{BigEndian, WriteBytesExt};
 
-extern crate serde;
 use protobuf::parse_from_bytes;
 use protobuf::Message;
 use protos::{
     component_schema::AddComponentSchema,
     entity::{Component, ComponentValue, CreateEntity},
 };
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+use std::hash::Hash;
 use std::io::Read;
-use std::net::{Shutdown, TcpStream};
+use std::net::{Shutdown, TcpListener, TcpStream};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
+
+use std::fmt::Debug;
+use std::iter::FromIterator;
 
 const FILENAME: &str = "schema.json";
 
@@ -35,7 +41,19 @@ mod entity;
 mod schema;
 
 use schema::{AttributeType, Schema};
+use std::thread;
 
+pub fn get_entities_in_all_map<T: Clone + Hash + Eq + Debug, V>(maps: Vec<HashMap<T, V>>) {
+    let mut keys: Vec<HashSet<&T>> = maps.iter().map(|r| HashSet::from_iter(r.keys())).collect();
+    keys.sort_by(|key1, key2| key1.len().partial_cmp(&key2.len()).unwrap());
+    let mut iter = keys.iter();
+    let intersection = iter
+        .next()
+        .map(|set| iter.fold(set.clone(), |set1, set2| &set1 & set2));
+    println!("{:?}", intersection);
+}
+
+#[allow(dead_code)]
 fn handle_client(mut stream: TcpStream, schema: Arc<Mutex<Schema>>) {
     let mut data = [0 as u8; 1024]; // using 50 byte buffer
 
@@ -73,21 +91,51 @@ fn main() {
     let mut comp = Component::default();
     let mut x = ComponentValue::default();
     x.name = String::from("x");
-    x.value.write_u64::<BigEndian>(517).unwrap();
+    x.value.write_i128::<BigEndian>(517).unwrap();
     let mut y = ComponentValue::default();
     y.name = String::from("y");
-    y.value.write_u64::<BigEndian>(12).unwrap();
+    y.value.write_i128::<BigEndian>(12).unwrap();
     let mut z = ComponentValue::default();
     z.name = String::from("z");
-    z.value.write_u64::<BigEndian>(25).unwrap();
+    z.value.write_i128::<BigEndian>(25).unwrap();
     comp.name = String::from("Velocity");
     comp.values.push(x);
     comp.values.push(y);
     comp.values.push(z);
     ent.components.push(comp);
 
-    println!("{:?}", ent.compute_size());
-    println!("{:?}", ent);
+    let position = HashMap::from_iter(vec![
+        (String::from("A"), ()),
+        (String::from("C"), ()),
+        (String::from("E"), ()),
+        (String::from("F"), ()),
+        (String::from("H"), ()),
+    ]);
+    let velocity = HashMap::from_iter(vec![
+        (String::from("C"), ()),
+        (String::from("D"), ()),
+        (String::from("I"), ()),
+        (String::from("E"), ()),
+        (String::from("H"), ()),
+    ]);
+    let explosive = HashMap::from_iter(vec![
+        (String::from("A"), ()),
+        (String::from("E"), ()),
+        (String::from("I"), ()),
+        (String::from("Z"), ()),
+        (String::from("H"), ()),
+    ]);
+
+    get_entities_in_all_map(vec![position, velocity, explosive]);
+
+    for component in ent.components.into_iter() {
+        println!("{:?}", component.compute_size());
+        let comp = entity::Component::parse_component(&schema.lock().unwrap(), component).unwrap();
+        let encoded = bincode::serialize(&comp).unwrap();
+        println!("{:?}", encoded.len());
+        println!("{:?}", comp);
+        println!("{:?}", encoded);
+    }
 
     /*let listener = TcpListener::bind("0.0.0.0:8687").unwrap();
     println!("Listening on port 8687");
@@ -106,8 +154,7 @@ fn main() {
         }
     }
 
-    drop(listener);
-    */
+    drop(listener);*/
     if let Err(err) = schema.lock().unwrap().write_schema(PathBuf::from(FILENAME)) {
         eprintln!("Error: {:?}", err);
     };
