@@ -17,8 +17,9 @@ use super::AttributeType;
 use super::Schema;
 use byteorder::{BigEndian, ByteOrder};
 use std::collections::HashMap;
+use serde::Serialize;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 enum ComponentAttributeValue {
     String(String),
     Integer(i128),
@@ -46,14 +47,14 @@ impl Default for ComponentAttributeValue {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Serialize)]
 struct ComponentAttribute {
     pub name: String,
     pub value: ComponentAttributeValue,
 }
 
 impl ComponentAttribute {
-    fn parse_component_attribute(
+    pub fn parse_component_attribute(
         component_schema: &HashMap<String, AttributeType>,
         component_value: protos::entity::ComponentValue,
     ) -> Result<Self, &'static str> {
@@ -70,14 +71,14 @@ impl ComponentAttribute {
     }
 }
 
-#[derive(Debug, Default)]
-struct Component {
+#[derive(Debug, Default, Serialize)]
+pub struct Component {
     pub name: String,
     attributes: Vec<ComponentAttribute>,
 }
 
 impl Component {
-    fn parse_component(
+    pub fn parse_component(
         schema: &Schema,
         component: protos::entity::Component,
     ) -> Result<Self, &'static str> {

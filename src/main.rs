@@ -32,6 +32,7 @@ use std::net::{Shutdown, TcpListener, TcpStream};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
+use bincode;
 use std::fmt::Debug;
 use std::iter::FromIterator;
 
@@ -44,12 +45,17 @@ use schema::{AttributeType, Schema};
 use std::thread;
 
 pub fn get_entities_in_all_map<T: Clone + Hash + Eq + Debug, V>(maps: Vec<HashMap<T, V>>) {
-    let mut keys: Vec<HashSet<&T>> = maps.iter().map(|r| HashSet::from_iter(r.keys())).collect();
-    keys.sort_by(|key1, key2| key1.len().partial_cmp(&key2.len()).unwrap());
-    let mut iter = keys.iter();
+    let mut keys = maps
+        .iter()
+        .map(|r| HashSet::from_iter(r.keys()))
+        .collect::<Vec<HashSet<&T>>>();
+
+    keys.sort_by(|key1, key2| key1.len().cmp(&key2.len()));
+
+    let mut iter = keys.into_iter();
     let intersection = iter
         .next()
-        .map(|set| iter.fold(set.clone(), |set1, set2| &set1 & set2));
+        .map(|set| iter.fold(set, |set1 , set2| &set1 & &set2));
     println!("{:?}", intersection);
 }
 
